@@ -41,9 +41,24 @@ public class HomeResource {
     @Autowired
     RoleRepository roleRepository;
 
-    @RequestMapping({"/home"})
+    @GetMapping({"/home"})
     public String home() {
         return "Page d'accueil";
+    }
+
+    @GetMapping({"/about"})
+    public String help() {
+        return "About us";
+    }
+
+    @GetMapping({"/admin"})
+    public String admin(){
+        return "Admin dashboard";
+    }
+
+    @GetMapping({"/user"})
+    public String user(){
+        return "welcome user";
     }
 
     @PostMapping(value = "/login")
@@ -59,6 +74,7 @@ public class HomeResource {
        // return ResponseEntity.ok(new LoginResponse(jwt,userDetails.getAuthorities()));
         return ResponseEntity.ok(new LoginResponse(jwt,((MyUserDetails) userDetails).getId(),userDetails.getUsername(),((MyUserDetails) userDetails).getEmail(),((MyUserDetails) userDetails).getNom(),userDetails.getAuthorities()));
     }
+
     @PostMapping(value ="/admin/adduser")
     public ResponseEntity<?> addUser(@RequestBody SignupRequest signupRequest)
     {
@@ -90,19 +106,8 @@ public class HomeResource {
 
     }
 
-    @RequestMapping({"/about"})
-    public String help() {
-        return "<h1>About us</h1>";
-    }
 
-    @RequestMapping({"/admin"})
-    public String admin(){
-        return "<h1>Admin dashboard</h1>";
-    }
 
-    @RequestMapping({"/user"})
-    public String user(){
-        return "<h1>welcome user</h1>";
-    }
+
 
 }
