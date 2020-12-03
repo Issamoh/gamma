@@ -8,7 +8,6 @@ import javax.persistence.*;
 @Table(name= "users",
 		uniqueConstraints = {
 				@UniqueConstraint(columnNames= "username"),
-				@UniqueConstraint(columnNames = "email"),
 		}
 		)
 public class User {
@@ -22,8 +21,8 @@ public class User {
 	private String poste ;
 	private String tel;
 	@Enumerated(EnumType.STRING)
-	@Column(length = 20)
-	private EAgentEtat etat;
+	@Column(length = 20, columnDefinition="VARCHAR(20) default 'LIBRE'")
+	private EAgentEtat etat ;
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable( name="user_roles",
 				joinColumns=@JoinColumn(name="user_id"),
@@ -50,6 +49,7 @@ public class User {
 		this.nom = nom;
 		this.poste = poste;
 		this.tel = tel;
+		this.etat=EAgentEtat.LIBRE;
 	}
 	public long getId() {
 		return id;

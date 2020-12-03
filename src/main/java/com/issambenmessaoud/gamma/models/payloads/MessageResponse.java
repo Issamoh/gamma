@@ -1,6 +1,6 @@
 package com.issambenmessaoud.gamma.models.payloads;
 
-public class SignupResponse {
+public class MessageResponse {
     public String getResponse() {
         return response;
     }
@@ -11,7 +11,7 @@ public class SignupResponse {
 
     private String response;
 
-    public SignupResponse(String response) {
+    public MessageResponse(String response) {
         this.response = response;
     }
 }

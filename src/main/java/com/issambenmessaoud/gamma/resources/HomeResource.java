@@ -1,13 +1,9 @@
 package com.issambenmessaoud.gamma.resources;
 
-import com.issambenmessaoud.gamma.models.ERole;
-import com.issambenmessaoud.gamma.models.Role;
-import com.issambenmessaoud.gamma.models.User;
-import com.issambenmessaoud.gamma.models.payloads.LoginRequest;
-import com.issambenmessaoud.gamma.models.payloads.LoginResponse;
-import com.issambenmessaoud.gamma.models.payloads.SignupRequest;
-import com.issambenmessaoud.gamma.models.payloads.SignupResponse;
+import com.issambenmessaoud.gamma.models.*;
+import com.issambenmessaoud.gamma.models.payloads.*;
 import com.issambenmessaoud.gamma.repositories.RoleRepository;
+import com.issambenmessaoud.gamma.repositories.TacheRepository;
 import com.issambenmessaoud.gamma.repositories.UserRepository;
 import com.issambenmessaoud.gamma.services.MyUserDetails;
 import com.issambenmessaoud.gamma.services.MyUserDetailsService;
@@ -20,6 +16,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,6 +39,9 @@ public class HomeResource {
     @Autowired
     RoleRepository roleRepository;
 
+    @Autowired
+    TacheRepository TacheRepository;
+
     @GetMapping({"/home"})
     public String home() {
         return "Page d'accueil";
@@ -52,12 +53,12 @@ public class HomeResource {
     }
 
     @GetMapping({"/admin"})
-    public String admin(){
+    public String admin() {
         return "Admin dashboard";
     }
 
     @GetMapping({"/user"})
-    public String user(){
+    public String user() {
         return "welcome user";
     }
 
@@ -66,29 +67,29 @@ public class HomeResource {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
         } catch (BadCredentialsException e) {
-            throw new Exception("Mot de passe ou nom d'utilisateur incorrectes", e);
+            return ResponseEntity.badRequest().body(new MessageResponse("Mot de passe ou nom d'utilisateur incorrectes"));
+            // throw new Exception("Mot de passe ou nom d'utilisateur incorrectes", e);
         }
 
-         UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getUsername());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getUsername());
         final String jwt = jwtTokenUtil.generateToken(userDetails);
-       // return ResponseEntity.ok(new LoginResponse(jwt,userDetails.getAuthorities()));
-        return ResponseEntity.ok(new LoginResponse(jwt,((MyUserDetails) userDetails).getId(),userDetails.getUsername(),((MyUserDetails) userDetails).getEmail(),((MyUserDetails) userDetails).getNom(),userDetails.getAuthorities()));
+        // return ResponseEntity.ok(new LoginResponse(jwt,userDetails.getAuthorities()));
+        return ResponseEntity.ok(new LoginResponse(jwt, ((MyUserDetails) userDetails).getId(), userDetails.getUsername(), ((MyUserDetails) userDetails).getEmail(), ((MyUserDetails) userDetails).getNom(), userDetails.getAuthorities(), ((MyUserDetails) userDetails).getEtat()));
     }
 
-    @PostMapping(value ="/admin/adduser")
-    public ResponseEntity<?> addUser(@RequestBody SignupRequest signupRequest)
-    {
-        if(userRepository.existsByUsername(signupRequest.getUsername())){
-            return ResponseEntity.badRequest().body(new SignupResponse("Username "+signupRequest.getUsername()+" existe déja"));
+    @PostMapping(value = "/admin/adduser")
+    public ResponseEntity<?> addUser(@RequestBody SignupRequest signupRequest) {
+        if (userRepository.existsByUsername(signupRequest.getUsername())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Nom d'utilisateur " + signupRequest.getUsername() + " existe déja"));
         }
-        User user = new User(signupRequest.getUsername(),signupRequest.getPassword(),signupRequest.getEmail(),signupRequest.getNom(),signupRequest.getPoste(),signupRequest.getTel());
+        User user = new User(signupRequest.getUsername(), signupRequest.getPassword(), signupRequest.getEmail(), signupRequest.getNom(), signupRequest.getPoste(), signupRequest.getTel());
         String strRole = signupRequest.getRole();
-        Set<Role> roles= new HashSet<>();
+        Set<Role> roles = new HashSet<>();
         Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                        .orElseThrow();
+                .orElseThrow();
         Role AdminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
                 .orElseThrow();
-        if(strRole!=null) {
+        if (strRole != null) {
             switch (strRole) {
                 case "admin":
                     roles.add(userRole);
@@ -98,12 +99,23 @@ public class HomeResource {
                     roles.add(userRole);
                     break;
 
-            }}
-        else {roles.add(userRole);}
-            user.setRoles(roles);
-            userRepository.save(user);
-            return ResponseEntity.ok(new SignupResponse("Utilisateur ajouté avec succes"));
+            }
+        } else {
+            roles.add(userRole);
+        }
+        user.setRoles(roles);
+        userRepository.save(user);
+        return ResponseEntity.ok(new MessageResponse("Utilisateur ajouté avec succes"));
 
+    }
+
+    @PostMapping(value = "/addtache")
+    public ResponseEntity<?> addTache(@RequestBody TacheAdd tacheAdd) {
+      //  DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-YYYY HH:mm:ss");
+        LocalDateTime dateCreation = LocalDateTime.now();
+        Tache tache = new Tache(tacheAdd.getTitle(), tacheAdd.getDescription(), tacheAdd.getDureeSuffisante(), dateCreation, ETacheEtat.NEW);
+        TacheRepository.save(tache);
+        return ResponseEntity.ok(new MessageResponse("Tache ajoutée avec succés"));
     }
 
 

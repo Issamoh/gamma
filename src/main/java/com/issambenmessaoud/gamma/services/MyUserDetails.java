@@ -1,6 +1,7 @@
 package com.issambenmessaoud.gamma.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.issambenmessaoud.gamma.models.EAgentEtat;
 import com.issambenmessaoud.gamma.models.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -31,19 +32,30 @@ public class MyUserDetails implements UserDetails {
 
     private String nom;
 
+    public EAgentEtat getEtat() {
+        return etat;
+    }
+
+    public void setEtat(EAgentEtat etat) {
+        this.etat = etat;
+    }
+
+    private EAgentEtat etat;
+
     @JsonIgnore
     private String password;
 
     private Collection<? extends GrantedAuthority> authorities;
 
     public MyUserDetails(Long id, String username,String nom, String email, String password,
-                           Collection<? extends GrantedAuthority> authorities) {
+                           Collection<? extends GrantedAuthority> authorities, EAgentEtat etat) {
         this.id = id;
         this.nom = nom ;
         this.username = username;
         this.email = email;
         this.password = password;
         this.authorities = authorities;
+        this.etat = etat;
     }
 
     public static MyUserDetails build(User user) {
@@ -57,7 +69,8 @@ public class MyUserDetails implements UserDetails {
                 user.getNom(),
                 user.getEmail(),
                 user.getPassword(),
-                authorities);
+                authorities,
+                user.getEtat());
     }
 
     @Override
