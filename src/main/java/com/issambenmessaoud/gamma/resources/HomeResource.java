@@ -14,11 +14,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @RestController
@@ -40,7 +43,7 @@ public class HomeResource {
     RoleRepository roleRepository;
 
     @Autowired
-    TacheRepository TacheRepository;
+    TacheRepository tacheRepository;
 
     @GetMapping({"/home"})
     public String home() {
@@ -54,12 +57,12 @@ public class HomeResource {
 
     @GetMapping({"/admin"})
     public String admin() {
-        return "Admin dashboard";
+        return "Espace d'Administrateur";
     }
 
     @GetMapping({"/user"})
     public String user() {
-        return "welcome user";
+        return "Bienvenue";
     }
 
     @PostMapping(value = "/login")
@@ -114,12 +117,65 @@ public class HomeResource {
       //  DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-YYYY HH:mm:ss");
         LocalDateTime dateCreation = LocalDateTime.now();
         Tache tache = new Tache(tacheAdd.getTitle(), tacheAdd.getDescription(), tacheAdd.getDureeSuffisante(), dateCreation, ETacheEtat.NEW);
-        TacheRepository.save(tache);
+        tacheRepository.save(tache);
         return ResponseEntity.ok(new MessageResponse("Tache ajoutée avec succés"));
     }
 
+    @GetMapping(value = "admin/freeusers")
+    public List<User> findFreeUsers(){
+        return userRepository.findAllByEtatEquals(EAgentEtat.LIBRE);
+    }
 
+    @GetMapping(value = "admin/busyusers")
+    public List<User> findBusyUsers(){
+        return userRepository.findAllByEtatEquals(EAgentEtat.OCCUPE);
+    }
 
+    @GetMapping(value = "/newtasks")
+    public List<Tache> findNewTasks(){
+        return tacheRepository.findAllByEtatEquals(ETacheEtat.NEW);
+    }
+    @GetMapping(value = "admin/startedtasks")
+    public List<Tache> findStartedTasks(){
+        return tacheRepository.findAllByEtatEquals(ETacheEtat.STARTED);
+    }
+    @GetMapping(value = "admin/finishedtasks")
+    public List<Tache> findFinishedTasks(){
+        return tacheRepository.findAllByEtatEquals(ETacheEtat.FINISHED);
+    }
+
+    @PostMapping(value = "mystartedtasks")
+    public List<Tache> findMyStartedTasks(@RequestBody TachesRequest tachesRequest){
+        User user = userRepository.findById(tachesRequest.getIdUser()).orElseThrow( ()-> new UsernameNotFoundException("Utilisateur non trouvé"));
+        return tacheRepository.findAllByEtatEqualsAndUserEquals(ETacheEtat.STARTED, user ) ;
+    }
+
+    @PostMapping(value = "myfinishedtasks")
+    public List<Tache> findMyFinishedTasks(@RequestBody TachesRequest tachesRequest){
+        User user = userRepository.findById(tachesRequest.getIdUser()).orElseThrow( ()-> new UsernameNotFoundException("Utilisateur non trouvé"));
+        return tacheRepository.findAllByEtatEqualsAndUserEquals(ETacheEtat.FINISHED, user ) ;
+    }
+
+    @PostMapping(value = "assigntasktouser")
+    public ResponseEntity assigntasktouser(@RequestBody AssignTaskToUser assignTaskToUser){
+        User user = userRepository.findById(assignTaskToUser.getIdUser()).orElseThrow( ()-> new UsernameNotFoundException("Utilisateur non trouvé"));
+        Tache tache = tacheRepository.findById(assignTaskToUser.getIdTache()).orElseThrow(()-> new UsernameNotFoundException("Tache non trouvé"));
+        if(tache.getEtat() == (ETacheEtat.STARTED)) return ResponseEntity.badRequest().body(new MessageResponse("Tache est prise par une autre personne"));
+        if(user.getEtat() == (EAgentEtat.OCCUPE)) return ResponseEntity.badRequest().body(new MessageResponse("Agent occupé par une autre tache"));
+        user.setEtat(EAgentEtat.OCCUPE);
+        tache.setEtat(ETacheEtat.STARTED);
+        LocalDateTime dateDebut = LocalDateTime.now();
+        tache.setDateDebut(dateDebut);
+        Set<Tache> taches = user.getTaches();
+        tache.setUser(user);
+        taches.add(tache);
+        user.setTaches(taches);
+
+        userRepository.save(user);
+        tacheRepository.save(tache);
+
+        return ResponseEntity.ok(new MessageResponse("Attribution avec succes"));
+    }
 
 
 }

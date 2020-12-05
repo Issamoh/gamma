@@ -1,5 +1,7 @@
 package com.issambenmessaoud.gamma.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Set;
 import java.util.HashSet;
 
@@ -15,6 +17,7 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id ;
 	private String username;
+	@JsonIgnore // so that avoiding security issues
 	private String password;
 	private String email ;
 	private String nom;
