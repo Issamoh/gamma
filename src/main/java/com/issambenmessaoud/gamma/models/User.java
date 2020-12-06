@@ -1,6 +1,7 @@
 package com.issambenmessaoud.gamma.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.util.Set;
 import java.util.HashSet;
@@ -31,10 +32,13 @@ public class User {
 				joinColumns=@JoinColumn(name="user_id"),
 				inverseJoinColumns=@JoinColumn(name="role_id"))
 	private Set<Role> roles = new HashSet<Role>();
-	@OneToMany(fetch = FetchType.LAZY)
+	/*@OneToMany(fetch = FetchType.LAZY)
 	@JoinTable( name="user_taches",
 				joinColumns=@JoinColumn(name="user_id"),
-				inverseJoinColumns=@JoinColumn(name="tache_id"))
+				inverseJoinColumns=@JoinColumn(name="tache_id"))*/
+
+	@JsonManagedReference
+	@OneToMany(mappedBy = "user", targetEntity = Tache.class, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private Set<Tache> taches = new HashSet<Tache>();
 	public Set<Tache> getTaches() {
 		return taches;

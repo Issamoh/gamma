@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 @Entity
 @Table(name = "taches")
@@ -31,7 +33,9 @@ public class Tache {
 	@Column(length = 20, columnDefinition="VARCHAR(20) default 'NEW'")
 	private ETacheEtat etat;
 
+	@JsonBackReference
 	@ManyToOne
+	@JoinColumn(name="user_id")
 	private User user ;
 
 
