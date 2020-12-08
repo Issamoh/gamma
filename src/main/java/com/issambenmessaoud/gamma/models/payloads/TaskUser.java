@@ -1,6 +1,6 @@
 package com.issambenmessaoud.gamma.models.payloads;
 
-public class AssignTaskToUser {
+public class TaskUser {
 
     private long idUser;
 

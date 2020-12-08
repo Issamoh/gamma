@@ -18,10 +18,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @RestController
@@ -47,7 +45,7 @@ public class HomeResource {
 
     @GetMapping({"/home"})
     public String home() {
-        return "Page d'accueil";
+        return "Bienvenue dans GAMMA ";
     }
 
     @GetMapping({"/about"})
@@ -144,20 +142,26 @@ public class HomeResource {
         return tacheRepository.findAllByEtatEquals(ETacheEtat.FINISHED);
     }
 
-    @PostMapping(value = "mystartedtasks")
-    public List<Tache> findMyStartedTasks(@RequestBody TachesRequest tachesRequest){
-        User user = userRepository.findById(tachesRequest.getIdUser()).orElseThrow( ()-> new UsernameNotFoundException("Utilisateur non trouvé"));
+    @GetMapping(value = "user/startedtasks/{id}")
+    public List<Tache> findMyStartedTasks(@PathVariable Long id){
+        User user = userRepository.findById(id).orElseThrow( ()-> new UsernameNotFoundException("Utilisateur non trouvé"));
         return tacheRepository.findAllByEtatEqualsAndUserEquals(ETacheEtat.STARTED, user ) ;
     }
 
-    @PostMapping(value = "myfinishedtasks")
-    public List<Tache> findMyFinishedTasks(@RequestBody TachesRequest tachesRequest){
-        User user = userRepository.findById(tachesRequest.getIdUser()).orElseThrow( ()-> new UsernameNotFoundException("Utilisateur non trouvé"));
+    @GetMapping(value = "user/finishedtasks/{id}")
+    public List<Tache> findMyFinishedTasks(@PathVariable Long id){
+        User user = userRepository.findById(id).orElseThrow( ()-> new UsernameNotFoundException("Utilisateur non trouvé"));
         return tacheRepository.findAllByEtatEqualsAndUserEquals(ETacheEtat.FINISHED, user ) ;
     }
 
+    @GetMapping(value = "user/abondonneddtasks/{id}")
+    public List<Tache> findMyAbondonnedTasks(@PathVariable Long id){
+        User user = userRepository.findById(id).orElseThrow( ()-> new UsernameNotFoundException("Utilisateur non trouvé"));
+        return tacheRepository.findAllByEtatEqualsAndUserEquals(ETacheEtat.ABONDONNED, user ) ;
+    }
+
     @PostMapping(value = "assigntasktouser")
-    public ResponseEntity assigntasktouser(@RequestBody AssignTaskToUser assignTaskToUser){
+    public ResponseEntity assigntasktouser(@RequestBody TaskUser assignTaskToUser){
         User user = userRepository.findById(assignTaskToUser.getIdUser()).orElseThrow( ()-> new UsernameNotFoundException("Utilisateur non trouvé"));
         Tache tache = tacheRepository.findById(assignTaskToUser.getIdTache()).orElseThrow(()-> new UsernameNotFoundException("Tache non trouvé"));
         if(tache.getEtat() == (ETacheEtat.STARTED)) return ResponseEntity.badRequest().body(new MessageResponse("Tache est prise par une autre personne"));
@@ -176,6 +180,21 @@ public class HomeResource {
 
         return ResponseEntity.ok(new MessageResponse("Attribution avec succes"));
     }
+    @PostMapping(value = "finishtask")
+    public ResponseEntity finishtask(@RequestBody TaskUser assignTaskToUser){
+        User user = userRepository.findById(assignTaskToUser.getIdUser()).orElseThrow( ()-> new UsernameNotFoundException("Utilisateur non trouvé"));
+        Tache tache = tacheRepository.findById(assignTaskToUser.getIdTache()).orElseThrow(()-> new UsernameNotFoundException("Tache non trouvé"));
+       user.setEtat(EAgentEtat.LIBRE);
+        tache.setEtat(ETacheEtat.FINISHED);
+        LocalDateTime dateFin = LocalDateTime.now();
+        tache.setDateFin(dateFin);
+
+        userRepository.save(user);
+        tacheRepository.save(tache);
+
+        return ResponseEntity.ok(new MessageResponse("Tâche terminée avec succes"));
+    }
+
 
 
 }
